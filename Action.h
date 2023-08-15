@@ -8,11 +8,12 @@
 
 class Action {
 public:
-    enum Operation { MOVE, ADD, DEL, NONE };
+    enum Operation { MOVE, ADD, DEL, REQID,  NONE };
 
     static Action move(int pID, Direction dir);
     static Action add(int pID, int x, int y);
     static Action del(int pID);
+    static Action reqID();
 
     Operation getOperation() const;
     int getPlayerID() const;

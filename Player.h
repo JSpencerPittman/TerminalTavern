@@ -19,8 +19,8 @@ public:
     Coord2D getPos() const;
     int getPlayerID() const;
 
-    std::string serialize() const;
-    static Player deserialize(const std::string &serPlayer);
+    nlohmann::json toJSON() const;
+    static Player fromJSON(const nlohmann::json& jsonPlayer);
 private:
     int pID;
     Coord2D pos;

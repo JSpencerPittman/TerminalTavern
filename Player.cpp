@@ -39,21 +39,20 @@ int Player::getPlayerID() const {
     return pID;
 }
 
-std::string Player::serialize() const {
+nlohmann::json Player::toJSON() const {
     using nlohmann::json;
     json jsonPly;
     jsonPly["pID"] = pID;
     jsonPly["x"] = pos.x;
     jsonPly["y"] = pos.y;
-    return jsonPly.dump();
+    return jsonPly;
 }
 
-Player Player::deserialize(const std::string &serPlayer) {
+Player Player::fromJSON(const nlohmann::json& jsonPlayer) {
     using nlohmann::json;
-    json jsonPly = json::parse(serPlayer);
-    int pID = jsonPly["pID"];
-    int x = jsonPly["x"];
-    int y = jsonPly["y"];
+    int pID = jsonPlayer["pID"];
+    int x = jsonPlayer["x"];
+    int y = jsonPlayer["y"];
     return { pID, x, y };
 }
 
@@ -147,14 +146,14 @@ void PlayerMap::print() {
 std::string PlayerMap::serialize() {
     using nlohmann::json;
 
-    std::vector<std::string> serPlayers;
+    std::vector<json> jsonPlayers;
 
     auto playerItr = players.begin();
     for ( ; playerItr != players.end(); playerItr++ )
-        serPlayers.push_back(playerItr->serialize());
+        jsonPlayers.push_back(playerItr->toJSON());
 
     json jsonPlyMap;
-    jsonPlyMap["map"] = serPlayers;
+    jsonPlyMap["map"] = jsonPlayers;
     return jsonPlyMap.dump();
 }
 
@@ -162,14 +161,14 @@ PlayerMap PlayerMap::deserialize(const std::string& serPlyMap) {
     using nlohmann::json;
 
     json jsonPlyMap = json::parse(serPlyMap);
-    std::vector<std::string> serPlayers = jsonPlyMap["map"];
+    std::vector<json> jsonPlayers = jsonPlyMap["map"];
 
     PlayerMap plyMap;
 
-    auto serPlyItr = serPlayers.begin();
-    while ( serPlyItr != serPlayers.end() ) {
-        plyMap.addPlayer(Player::deserialize(*serPlyItr));
-        serPlyItr++;
+    auto jsonPlyItr = jsonPlayers.begin();
+    while ( jsonPlyItr != jsonPlayers.end() ) {
+        plyMap.addPlayer(Player::fromJSON(*jsonPlyItr));
+        jsonPlyItr++;
     }
     return plyMap;
 }
