@@ -12,17 +12,24 @@ tcp::socket &TCPConnection::socket() {
 
 void TCPConnection::start() {
     boost::asio::async_read_until(socket_, buf_, '\n',
-                                  boost::bind(&TCPConnection::handle_action, shared_from_this()));
+                                  boost::bind(&TCPConnection::handle_action,
+                                              shared_from_this(),
+                                              boost::asio::placeholders::error));
 }
 
 TCPConnection::TCPConnection(boost::asio::io_context &ioContext, PlayerMap* playerMap)
     : socket_(ioContext), playerMap_(playerMap) {}
 
-void TCPConnection::handle_action() {
-//    std::string data = boost::asio::buffer_cast<const char*>(buf_.data());
+void TCPConnection::handle_action(const boost::system::error_code& e) {
     std::istream input_stream(&buf_);
     std::string data;
     std::getline(input_stream, data);
+
+    if(e == boost::asio::error::eof) return;
+
+    std::cout << "DATA_IN: " << data << std::endl;
+    std::cout << "DATE_IN_SIZE: " << data.size() << std::endl;
+
     Action action = Action::deserialize(data);
 
     switch (action.getOperation()) {
@@ -37,6 +44,9 @@ void TCPConnection::handle_action() {
             break;
         case Action::DEL:
             handleActionDeletePlayer(action);
+            break;
+        case Action::REFRESH:
+            handleActionRefresh(action);
             break;
         default:
             break;
@@ -75,6 +85,12 @@ void TCPConnection::handleActionDeletePlayer(const Action &action) {
     std::cout << "Terminating player #" << action.getPlayerID() << "..." << std::endl;
     int pID = action.getPlayerID();
     playerMap_->removePlayer(pID);
+}
+
+void TCPConnection::handleActionRefresh(const Action &action) {
+    std::cout << "Sending refresher" << std::endl;
+    std::string serialPlayerMap = playerMap_->serialize();
+    sendData(serialPlayerMap);
 }
 
 void TCPConnection::sendData(std::string &data) {

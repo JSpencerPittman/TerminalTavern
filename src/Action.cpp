@@ -17,6 +17,14 @@ Action Action::reqID() {
     return {REQID, -1, Direction::NONE, -1, -1};
 }
 
+Action Action::refresh() {
+    return {REFRESH, -1, Direction::NONE, -1, -1};
+}
+
+Action Action::none() {
+    return {NONE, -1, Direction::NONE, -1, -1};
+}
+
 Action::Action(Action::Operation op, int pID, Direction dir, int x, int y):
     op(op), pID(pID), dir(dir), x(x), y(y) {}
 
@@ -62,8 +70,12 @@ std::string Action::serialize() const {
             jsonAct["op"] = DEL;
             jsonAct["pID"] = pID;
             break;
+        case REFRESH:
+            jsonAct["op"] = REFRESH;
+            break;
         default:
-            return "";
+            jsonAct["op"] = NONE;
+            break;
     }
 
     return jsonAct.dump();
@@ -71,7 +83,13 @@ std::string Action::serialize() const {
 
 Action Action::deserialize(const std::string &serAct) {
     using nlohmann::json;
-    json jsonAct = json::parse(serAct);
+
+    json jsonAct;
+    try {
+        jsonAct = json::parse(serAct);
+    } catch (nlohmann::json::parse_error& e) {
+        return none();
+    }
 
     Operation op = jsonAct["op"];
 
@@ -93,8 +111,10 @@ Action Action::deserialize(const std::string &serAct) {
         case DEL:
             pID = jsonAct["pID"];
             return del(pID);
+        case REFRESH:
+            return refresh();
         default:
-            return Action::reqID();
+            return none();
     }
 }
 

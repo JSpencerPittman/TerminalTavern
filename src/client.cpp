@@ -2,7 +2,8 @@
 #include "TTClient.h"
 
 int main() {
-    boost::asio::io_context ioContext;
-    TTClient client(ioContext);
+    boost::asio::io_service ioService;
+    TTClient client(ioService);
     client.run();
+    ioService.run();
 }

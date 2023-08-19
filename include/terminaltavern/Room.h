@@ -19,6 +19,7 @@ public:
     void teleportPlayer(int pID, int x, int y);
 
     void alignWithServer(PlayerMap& serverMap);
+    void redrawRoom();
 
 private:
     bool inBounds(Coord2D loc) const;

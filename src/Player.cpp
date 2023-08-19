@@ -23,8 +23,8 @@ void Player::move(Direction dir) {
     }
 }
 
-void Player::teleport(Coord2D pos) {
-    pos = pos;
+void Player::teleport(Coord2D p) {
+    this->pos = p;
 }
 
 void Player::teleport(int x, int y) {

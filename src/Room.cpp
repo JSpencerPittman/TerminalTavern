@@ -7,6 +7,7 @@ Room::Room(WINDOW *win): win(win) {
     cbreak();
     noecho();
     curs_set(0); // Hide cursor
+    nodelay(win, TRUE);
 
     clear();
 
@@ -60,7 +61,7 @@ void Room::teleportPlayer(int pID, Coord2D pos) {
 }
 
 void Room::teleportPlayer(int pID, int x, int y) {
-    return teleportPlayer(pID, {x,y});
+    teleportPlayer(pID, {x,y});
 }
 
 void Room::alignWithServer(PlayerMap &serverMap) {
@@ -107,6 +108,23 @@ void Room::alignWithServer(PlayerMap &serverMap) {
         removePlayer(playerID);
         ci++;
     }
+}
+
+void Room::redrawRoom() {
+    clear();
+
+    std::vector<int> playerIDs = playerMap.getPlayerIDS();
+    for (auto playerId: playerIDs) {
+        Coord2D pos = playerMap.getPlayerPos(playerId);
+        mvaddch(pos.y, pos.x, '0');
+    }
+
+    // Border around window
+    attron(A_BOLD);
+    box(win, 0, 0);
+    attroff(A_BOLD);
+
+    refresh();
 }
 
 bool Room::inBounds(Coord2D loc) const {

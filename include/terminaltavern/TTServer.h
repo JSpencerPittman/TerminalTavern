@@ -29,12 +29,13 @@ private:
     TCPConnection(boost::asio::io_context& ioContext, PlayerMap* playerMap);
 
     // Process the user's request
-    void handle_action();
+    void handle_action(const boost::system::error_code& e);
 
     void handleActionRequestID(const Action& action);
     void handleActionAddPlayer(const Action& action);
     void handleActionMovePlayer(const Action& action);
     void handleActionDeletePlayer(const Action& action);
+    void handleActionRefresh(const Action& action);
 
     void sendData(std::string& data);
 
