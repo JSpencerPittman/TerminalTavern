@@ -17,5 +17,5 @@ set(SERVER_SOURCE_FILES src/server.cpp src/TTServer.cpp)
 add_executable(Client ${CLIENT_SOURCE_FILES} ${GENERAL_SOURCE_FILES})
 add_executable(Server ${SERVER_SOURCE_FILES} ${GENERAL_SOURCE_FILES})
 
-target_link_libraries(Client Boost::system nlohmann_json::nlohmann_json  ${CURSES_LIBRARIERS})
+target_link_libraries(Client Boost::system nlohmann_json::nlohmann_json  ${CURSES_LIBRARIES})
 target_link_libraries(Server Boost::system nlohmann_json::nlohmann_json)

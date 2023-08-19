@@ -42,7 +42,7 @@ private:
 
     // Networking
     std::string hostname_;
-    boost::asio::ip::port_type port_;
+    int port_;
     tcp::resolver resolver_;
     tcp::socket socket_;
 };
