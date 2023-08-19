@@ -15,15 +15,13 @@ Room::Room(WINDOW *win): win_(win) {
 }
 
 void Room::addPlayer(Player p) {
-    mvaddch(p.getPos().y, p.getPos().x, p.getPlayerID());
-    refresh();
-
     playerMap_.addPlayer(p);
+    drawCharacter(p.getPlayerID());
+    refresh();
 }
 
 void Room::removePlayer(int pID) {
-    Coord2D pos = playerMap_.getPlayerPos(pID);
-    mvaddch(pos.y, pos.x, ' ');
+    eraseCharacter(pID);
     refresh();
 
     playerMap_.removePlayer(pID);
@@ -37,22 +35,19 @@ void Room::movePlayer(int pID, Direction dir) {
 
     if (!inBounds(futPos)) return;
 
-    mvaddch(currPos.y, currPos.x, ' ');
-    mvaddch(futPos.y, futPos.x, '0');
-    refresh();
-
+    eraseCharacter(pID);
     playerMap_.movePlayer(pID, dir);
+    drawCharacter(pID);
+    refresh();
 }
 
 void Room::teleportPlayer(int pID, Coord2D pos) {
     if (!inBounds(pos)) return;
 
-    Coord2D currPos = playerMap_.getPlayerPos(pID);
-    mvaddch(currPos.y, currPos.x, ' ');
-    mvaddch(pos.y, pos.x, '0');
-    refresh();
-
+    eraseCharacter(pID);
     playerMap_.teleportPlayer(pID, pos);
+    drawCharacter(pID);
+    refresh();
 }
 
 void Room::teleportPlayer(int pID, int x, int y) {
@@ -109,10 +104,8 @@ void Room::redrawRoom() {
     clear();
 
     std::vector<int> playerIDs = playerMap_.getPlayerIDS();
-    for (auto playerId: playerIDs) {
-        Coord2D pos = playerMap_.getPlayerPos(playerId);
-        mvaddch(pos.y, pos.x, '0');
-    }
+    for (auto playerId: playerIDs)
+        drawCharacter(playerId);
 
     drawBorder();
     refresh();
@@ -123,6 +116,26 @@ void Room::drawBorder() {
     attron(A_BOLD);
     box(win_, 0, 0);
     attroff(A_BOLD);
+}
+
+void Room::drawCharacter(int pID) {
+    Player p = playerMap_.getPlayer(pID);
+    Coord2D pos = p.getPos();
+    PlayerPixelMap::Unravel unravel = p.getPixelMap().unravelPixelMapAtLocation(pos);
+
+    auto itr = unravel.begin();
+    for(; itr != unravel.end(); ++itr)
+        mvaddch(itr->first.y, itr->first.x, itr->second);
+}
+
+void Room::eraseCharacter(int pID) {
+    Player p = playerMap_.getPlayer(pID);
+    Coord2D pos = p.getPos();
+    PlayerPixelMap::Unravel unravel = p.getPixelMap().unravelPixelMapAtLocation(pos);
+
+    auto itr = unravel.begin();
+    for(; itr != unravel.end(); ++itr)
+        mvaddch(itr->first.y, itr->first.x, ' ');
 }
 
 bool Room::inBounds(Coord2D loc) const {

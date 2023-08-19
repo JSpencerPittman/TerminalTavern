@@ -23,6 +23,9 @@ public:
 
 private:
     void drawBorder();
+    void drawCharacter(int pID);
+    void eraseCharacter(int pID);
+
     bool inBounds(Coord2D loc) const;
 
     WINDOW *win_;

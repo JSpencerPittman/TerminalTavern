@@ -1,8 +1,85 @@
 #include "Player.h"
 
-Player::Player(int pID, Coord2D initPos): pID(pID), pos(initPos) {}
+#include <utility>
 
-Player::Player(int pID, int x, int y): pID(pID), pos{x, y} {}
+PlayerPixelMap::PlayerPixelMap(PlayerPixelMap::PixelMap pmap): pmap_(std::move(pmap)) {}
+
+char PlayerPixelMap::getPixel(Coord2D pos) const {
+    return pmap_[pos.y][pos.x];
+}
+
+char PlayerPixelMap::getPixel(int x, int y) const {
+    return getPixel({x, y});
+}
+
+const PlayerPixelMap::PixelMap& PlayerPixelMap::getPixelMap() const {
+    return pmap_;
+}
+
+PlayerPixelMap::Unravel PlayerPixelMap::unravelPixelMap() const {
+    Unravel pmapUnr;
+
+    for(int r = 0; r < 3; r++) {
+        for(int c = 0; c < 3; c++) {
+            Coord2D pos{c, r};
+            char pixel = getPixel(pos);
+            pmapUnr.emplace_back(pos, pixel);
+        }
+    }
+
+    return pmapUnr;
+}
+
+PlayerPixelMap::Unravel
+PlayerPixelMap::unravelPixelMapAtLocation(Coord2D pos) const {
+    Unravel pmapUnr = unravelPixelMap();
+    auto pmapUnrItr = pmapUnr.begin();
+    for(; pmapUnrItr != pmapUnr.end(); ++pmapUnrItr) {
+        pmapUnrItr->first.x += pos.x - 1;
+        pmapUnrItr->first.y += pos.y - 1;
+    }
+
+    return pmapUnr;
+}
+
+PlayerPixelMap::Unravel
+PlayerPixelMap::unravelPixelMapAtLocation(int x, int y) const {
+        return unravelPixelMapAtLocation({x, y});
+}
+
+std::string PlayerPixelMap::serialize() const {
+    std::string res;
+
+    auto rowItr = pmap_.begin();
+    for(; rowItr != pmap_.end(); ++rowItr) {
+        auto colItr = rowItr->begin();
+        for(; colItr != rowItr->end(); ++colItr)
+            res.push_back(*colItr);
+    }
+
+    return res;
+}
+
+PlayerPixelMap PlayerPixelMap::deserialize(const std::string &serPixMap) {
+    auto serItr = serPixMap.begin();
+    PlayerPixelMap::PixelMap pixmap;
+    for(int r = 0; r < 3; r++) {
+        std::vector<char> row;
+        for(int c = 0; c < 3; c++) {
+            row.push_back(*serItr);
+            serItr++;
+        }
+        pixmap.push_back(row);
+    }
+
+    return PlayerPixelMap(pixmap);
+}
+
+Player::Player(int pID, Coord2D initPos, PlayerPixelMap& pixelMap)
+    : pID(pID), pos(initPos), pixmap(pixelMap) {}
+
+Player::Player(int pID, int x, int y, PlayerPixelMap& pixelMap)
+    : pID(pID), pos{x, y}, pixmap(pixelMap) {}
 
 void Player::move(Direction dir) {
     switch (dir) {
@@ -39,13 +116,18 @@ int Player::getPlayerID() const {
     return pID;
 }
 
+const PlayerPixelMap &Player::getPixelMap() const {
+    return pixmap;
+}
+
 nlohmann::json Player::toJSON() const {
     using nlohmann::json;
-    json jsonPly;
-    jsonPly["pID"] = pID;
-    jsonPly["x"] = pos.x;
-    jsonPly["y"] = pos.y;
-    return jsonPly;
+    json jsonPlayer;
+    jsonPlayer["pID"] = pID;
+    jsonPlayer["x"] = pos.x;
+    jsonPlayer["y"] = pos.y;
+    jsonPlayer["pixmap"] = pixmap.serialize();
+    return jsonPlayer;
 }
 
 Player Player::fromJSON(const nlohmann::json& jsonPlayer) {
@@ -53,7 +135,9 @@ Player Player::fromJSON(const nlohmann::json& jsonPlayer) {
     int pID = jsonPlayer["pID"];
     int x = jsonPlayer["x"];
     int y = jsonPlayer["y"];
-    return { pID, x, y };
+    PlayerPixelMap pixmap =
+            PlayerPixelMap::deserialize(jsonPlayer["pixmap"]);
+    return {pID, x, y, pixmap};
 }
 
 PlayerMap::PlayerMap() {
@@ -97,18 +181,19 @@ void PlayerMap::addPlayer(Player p) {
 void PlayerMap::addPlayer(Coord2D pos) {
     int pID = availableID();
     if ( pID == -1 ) return; // Server full
+    PlayerPixelMap::PixelMap pixelmap = {
+            {'0', '0', '0'},
+            {'0', ' ', '0'},
+            {'0', '0', '0'}
+    };
+    PlayerPixelMap playerPixelMap(pixelmap);
 
-    players.emplace_back(pID, pos);
+    players.emplace_back(pID, pos, playerPixelMap);
     online[pID] = true;
 }
 
 void PlayerMap::addPlayer(int x, int y) {
-    int pID = availableID();
-    if ( pID == -1 ) return; // Server full
-
-    Coord2D pos{x, y};
-    players.emplace_back(pID, pos);
-    online[pID] = true;
+    addPlayer({x, y});
 }
 
 void PlayerMap::removePlayer(int pID) {

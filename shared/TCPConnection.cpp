@@ -59,7 +59,14 @@ void TCPConnection::handleActionRequestID(const Action &action) {
 
 void TCPConnection::handleActionAddPlayer(const Action &action) {
     std::cout << "Adding player #" << action.getPlayerID() << "..." << std::endl;
-    Player newPlayer{action.getPlayerID(), action.getX(), action.getY()};
+    PlayerPixelMap::PixelMap pixmap = {
+            {'0','0','0'},
+            {'0',' ','0'},
+            {'0','0','0'}
+    };
+    PlayerPixelMap playerPixelMap(pixmap);
+
+    Player newPlayer{action.getPlayerID(), action.getX(), action.getY(), playerPixelMap};
     playerMap_->addPlayer(newPlayer);
 
     std::string serialPlayerMap = playerMap_->serialize();
