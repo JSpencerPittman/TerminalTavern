@@ -14,11 +14,11 @@
 #define REFRESH_RATE 50
 
 #if BOOST_VERSION >= BOOST_1_82
-typedef boost::asio::ip::port_type PortType;
+    #define PortType boost::asio::ip::port_type
 #elif BOOST_VERSION >= BOOST_1_74
-typedef int PortType;
+    #define PortType int
 #else
-    typedef int PortType;
+    #define PortType int
 #endif
 
 using boost::asio::ip::tcp;
