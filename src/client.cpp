@@ -3,7 +3,8 @@
 
 int main() {
     boost::asio::io_service ioService;
-    TTClient client(ioService);
+    WINDOW* win = initscr();
+    TTClient client(ioService, win);
     client.run();
     ioService.run();
 }

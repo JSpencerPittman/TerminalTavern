@@ -22,11 +22,12 @@ public:
     void redrawRoom();
 
 private:
+    void drawBorder();
     bool inBounds(Coord2D loc) const;
 
-    WINDOW *win;
-    int winWidth, winHeight;
-    PlayerMap playerMap;
+    WINDOW *win_;
+    int winWidth_, winHeight_;
+    PlayerMap playerMap_;
 };
 
 

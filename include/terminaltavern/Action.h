@@ -8,7 +8,7 @@
 
 class Action {
 public:
-    enum Operation { MOVE, ADD, DEL, REQID, REFRESH,  NONE };
+    enum Operation { MOVE, ADD, DEL, REQID, REFRESH, NONE };
 
     static Action move(int pID, Direction dir);
     static Action add(int pID, int x, int y);
@@ -30,9 +30,8 @@ private:
     Action(Operation op, int pID, Direction dir, int x, int y);
 
     Operation op;
-
-    int pID;
     Direction dir;
+    int pID;
     int x, y;
 };
 

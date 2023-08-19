@@ -1,39 +1,33 @@
 #include "TTClient.h"
 #include "Action.h"
 
-TTClient::TTClient(boost::asio::io_service& ioService)
-    : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0),
-        timer_(ioService, boost::asio::chrono::milliseconds(100)) {}
+TTClient::TTClient(boost::asio::io_service& ioService, WINDOW* win)
+    : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), win_(win), room_(win),
+        timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {
+}
 
 void TTClient::run() {
     // Establish connection
-    std::cout << "Connecting to client" << std::endl;
     socket_.connect(
             tcp::endpoint(
-                    boost::asio::ip::address::from_string("127.0.0.1"),
-                    9999));
+                    boost::asio::ip::address::from_string(SERVER_HOSTNAME),
+                    SERVER_PORT));
 
 
     // Get the player ID
-    std::cout << "Requesting available player id..." << std::endl;
     Action requestID = Action::reqID();
     sendAction(requestID);
     playerID_ = retrievePlayerID();
 
     // Add the player to server
-    std::cout << "Registering as player #" << playerID_ << std::endl;
     Action addPlayer = Action::add(playerID_, 5, 5);
     sendAction(addPlayer);
 
-    // Intialize room
+    // Initialize room
     PlayerMap servMap = retrievePlayerMap();
-    WINDOW* win = initscr();
-    Room room(win);
-    room.alignWithServer(servMap);
+    room_.alignWithServer(servMap);
 
-    timer_.async_wait(boost::bind(
-            &TTClient::refreshClient,
-            this, room, win));
+    timer_.async_wait(boost::bind(&TTClient::refreshClient, this));
 }
 
 int TTClient::retrievePlayerID() {
@@ -51,17 +45,15 @@ std::string TTClient::getData() {
     boost::asio::read_until(socket_, buf, '\n');
     std::string data = boost::asio::buffer_cast<const char*>(buf.data());
     data.pop_back(); // Remove '\n'
-//    std::cout << "DATA_IN: " << data << std::endl;
     return data;
 }
 
 void TTClient::sendAction(const Action& action) {
     std::string serialAction = action.serialize();
-//    std::cout << "DATA_OUT: " << serialAction << std::endl;
     write(socket_, boost::asio::buffer(serialAction + '\n'));
 }
 
-Direction TTClient::getInput(WINDOW* win) {
+Direction TTClient::getInput() {
     int in_char = getch();
 
     switch (in_char) {
@@ -80,15 +72,15 @@ Direction TTClient::getInput(WINDOW* win) {
     }
 }
 
-void TTClient::refreshClient(Room &room, WINDOW* win) {
-    Direction dir = getInput(win);
+void TTClient::refreshClient() {
+    Direction dir = getInput();
 
     if(dir == LEAVE) {
         Action delPlayer = Action::del(playerID_);
         sendAction(delPlayer);
         return;
     } else if(dir != NONE) {
-        room.movePlayer(playerID_, dir);
+        room_.movePlayer(playerID_, dir);
         Action moveAction = Action::move(playerID_, dir);
         sendAction(moveAction);
     } else {
@@ -97,15 +89,13 @@ void TTClient::refreshClient(Room &room, WINDOW* win) {
     }
 
     PlayerMap serverMap = retrievePlayerMap();
-    room.alignWithServer(serverMap);
+    room_.alignWithServer(serverMap);
 
-    if (refCnt_++ % 100 == 0) {
+    if (refCnt_++ % REDRAW_FREQUENCY == 0) {
         refCnt_ = 0;
-        room.redrawRoom();
+        room_.redrawRoom();
     }
 
-    timer_.expires_from_now(boost::asio::chrono::milliseconds (50));
-    timer_.async_wait(boost::bind(
-            &TTClient::refreshClient,
-            this, room, win));
+    timer_.expires_from_now(boost::asio::chrono::milliseconds (REFRESH_RATE));
+    timer_.async_wait(boost::bind(&TTClient::refreshClient, this));
 }
