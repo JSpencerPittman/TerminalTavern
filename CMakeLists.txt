@@ -1,3 +1,5 @@
+set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # MacOS
     set(CMAKE_MINIMUM_REQUIRED_VERSION 3.24)
     set(PLATFORM_INCLUDE_PATH include/terminaltavern/platform/macos)
