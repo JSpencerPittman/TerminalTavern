@@ -3,7 +3,7 @@
 #include <utility>
 #include "Action.h"
 
-TTClient::TTClient(boost::asio::io_service& ioService, std::string hostname, int port)
+TTClient::TTClient(boost::asio::io_service& ioService, std::string hostname, PortType port)
     : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), room_(initscr()), resolver_(ioService),
         hostname_(std::move(hostname)), port_(port),
         timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {

@@ -10,6 +10,18 @@
 #include <boost/asio.hpp>
 #include "Action.h"
 #include "Player.h"
+#include "util.h"
+
+#define BOOST_1_82 108200
+#define BOOST_1_74 107400
+
+#if BOOST_VERSION >= BOOST_1_82
+typedef boost::asio::ip::port_type PortType;
+#elif BOOST_VERSION >= BOOST_1_74
+typedef int PortType;
+#else
+    typedef int PortType;
+#endif
 
 using boost::asio::ip::tcp;
 
@@ -48,7 +60,7 @@ private:
 class TTServer
 {
 public:
-    TTServer(boost::asio::io_context& ioContext, boost::asio::ip::port_type port);
+    TTServer(boost::asio::io_context& ioContext, PortType port);
 
 private:
     // Start listening for incoming users on a new socket

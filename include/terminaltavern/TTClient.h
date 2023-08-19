@@ -8,15 +8,24 @@
 #include <vector>
 #include "Player.h"
 #include "Room.h"
+#include "util.h"
 
 #define REDRAW_FREQUENCY 100
 #define REFRESH_RATE 50
+
+#if BOOST_VERSION >= BOOST_1_82
+typedef boost::asio::ip::port_type PortType;
+#elif BOOST_VERSION >= BOOST_1_74
+typedef int PortType;
+#else
+    typedef int PortType;
+#endif
 
 using boost::asio::ip::tcp;
 
 class TTClient {
 public:
-    TTClient(boost::asio::io_service& ioService, std::string hostname, int port);
+    TTClient(boost::asio::io_service& ioService, std::string hostname,  PortType port);
     void run();
 private:
     void sendAction(const Action& action);
@@ -42,7 +51,7 @@ private:
 
     // Networking
     std::string hostname_;
-    boost::asio::ip::port_type port_;
+    PortType port_;
     tcp::resolver resolver_;
     tcp::socket socket_;
 };
