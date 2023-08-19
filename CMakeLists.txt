@@ -10,8 +10,8 @@ find_package(Curses REQUIRED)
 
 include_directories(include/terminaltavern)
 
-set(GENERAL_SOURCE_FILES src/Player.cpp src/Action.cpp src/Room.cpp)
-set(CLIENT_SOURCE_FILES src/client.cpp src/TTClient.cpp)
+set(GENERAL_SOURCE_FILES src/Player.cpp src/Action.cpp)
+set(CLIENT_SOURCE_FILES src/client.cpp src/TTClient.cpp src/Room.cpp)
 set(SERVER_SOURCE_FILES src/server.cpp src/TTServer.cpp)
 
 add_executable(Client ${CLIENT_SOURCE_FILES} ${GENERAL_SOURCE_FILES})
