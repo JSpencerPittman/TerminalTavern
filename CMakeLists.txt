@@ -4,7 +4,7 @@ project(TerminalTavern)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-lncurses")
 
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost 1.74 REQUIRED COMPONENTS system)
 find_package(nlohmann_json REQUIRED)
 find_package(Curses REQUIRED)
 
