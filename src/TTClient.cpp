@@ -1,20 +1,17 @@
 #include "TTClient.h"
+
+#include <utility>
 #include "Action.h"
 
-TTClient::TTClient(boost::asio::io_service& ioService, WINDOW* win)
-    : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), win_(win), room_(win), resolver_(ioService),
+TTClient::TTClient(boost::asio::io_service& ioService, std::string hostname, int port)
+    : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), room_(initscr()), resolver_(ioService),
+        hostname_(std::move(hostname)), port_(port),
         timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {
 }
 
 void TTClient::run() {
     // Establish connection
-    tcp::resolver::query query(SERVER_HOSTNAME, "http");
-    tcp::resolver::iterator endpointIterator = resolver_.resolve(query);
-    tcp::endpoint endpoint = *endpointIterator;
-    boost::asio::ip::address address = endpoint.address();
-
-    endpoint.port(SERVER_PORT);
-
+    tcp::endpoint endpoint = resolveEndpoint();
     socket_.connect(endpoint);
 
     // Get the player ID
@@ -101,4 +98,45 @@ void TTClient::refreshClient() {
 
     timer_.expires_from_now(boost::asio::chrono::milliseconds (REFRESH_RATE));
     timer_.async_wait(boost::bind(&TTClient::refreshClient, this));
+}
+
+tcp::endpoint TTClient::resolveEndpoint() {
+    boost::asio::ip::address ipAddress;
+
+    if(isIPAddress(hostname_)) ipAddress = boost::asio::ip::address::from_string(hostname_);
+    else {
+        tcp::resolver::query query(hostname_, "http");
+        tcp::resolver::iterator endpointIterator = resolver_.resolve(query);
+        tcp::endpoint endpoint = *endpointIterator;
+        ipAddress = endpoint.address();
+    }
+
+    return {ipAddress, port_};
+}
+
+bool TTClient::isIPAddress(const std::string& s) {
+    std::vector<int> dotIndices;
+    for(int i = 0; i < (int)s.size(); i++)
+        if(s[i] == '.') dotIndices.push_back(i);
+
+    if(dotIndices.size() != 3) return false;
+
+    int prev = -1;
+    std::string segment;
+    auto dotItr = dotIndices.begin();
+    while(dotItr != dotIndices.end()) {
+        segment = std::string(s.begin() + prev + 1, s.begin() + (*dotItr));
+        if(!isNumber(segment)) return false;
+        prev = *dotItr;
+        dotItr++;
+    }
+
+    segment = std::string(s.begin() + prev+1, s.end());
+    return isNumber(segment);
+}
+
+bool TTClient::isNumber(const std::string& s) {
+    auto sItr = s.begin();
+    while(sItr != s.end() && isdigit(*sItr)) ++sItr;
+    return sItr == s.end() && !s.empty();
 }

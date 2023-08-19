@@ -48,7 +48,7 @@ private:
 class TTServer
 {
 public:
-    TTServer(boost::asio::io_context& ioContext);
+    TTServer(boost::asio::io_context& ioContext, boost::asio::ip::port_type port);
 
 private:
     // Start listening for incoming users on a new socket

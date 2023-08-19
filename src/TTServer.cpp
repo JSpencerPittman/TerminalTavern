@@ -95,9 +95,9 @@ void TCPConnection::sendData(std::string &data) {
                              boost::asio::use_future);
 }
 
-TTServer::TTServer(boost::asio::io_context &ioContext)
+TTServer::TTServer(boost::asio::io_context &ioContext, boost::asio::ip::port_type port)
     : ioContext_(ioContext),
-      acceptor_(ioContext, tcp::endpoint(tcp::v4(), 9999)),
+      acceptor_(ioContext, tcp::endpoint(tcp::v4(), port)),
       playerMap_() {
     start_accept();
 }

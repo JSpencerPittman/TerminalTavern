@@ -4,20 +4,19 @@
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
 #include <iostream>
+#include <string>
+#include <vector>
 #include "Player.h"
 #include "Room.h"
 
 #define REDRAW_FREQUENCY 100
 #define REFRESH_RATE 50
 
-#define SERVER_HOSTNAME "terminaltavern.ddns.net"
-#define SERVER_PORT 10777
-
 using boost::asio::ip::tcp;
 
 class TTClient {
 public:
-    TTClient(boost::asio::io_service& ioService, WINDOW* win);
+    TTClient(boost::asio::io_service& ioService, std::string hostname, int port);
     void run();
 private:
     void sendAction(const Action& action);
@@ -29,13 +28,23 @@ private:
 
     void refreshClient();
 
-    tcp::socket socket_;
+    tcp::endpoint resolveEndpoint();
+    static bool isIPAddress(const std::string& s);
+    static bool isNumber(const std::string& s);
+
+    // Tavern
     int playerID_;
+    Room room_;
+
+    // Main execution loop
     boost::asio::steady_timer timer_;
     int refCnt_;
-    WINDOW* win_;
-    Room room_;
+
+    // Networking
+    std::string hostname_;
+    boost::asio::ip::port_type port_;
     tcp::resolver resolver_;
+    tcp::socket socket_;
 };
 
 
