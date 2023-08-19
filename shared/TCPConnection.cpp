@@ -1,6 +1,4 @@
-#include "TTServer.h"
-
-#include <iostream>
+#include "TCPConnection.h"
 
 TCPConnection::pointer TCPConnection::create(boost::asio::io_context &ioContext, PlayerMap* playerMap) {
     return pointer(new TCPConnection(ioContext, playerMap));
@@ -18,7 +16,7 @@ void TCPConnection::start() {
 }
 
 TCPConnection::TCPConnection(boost::asio::io_context &ioContext, PlayerMap* playerMap)
-    : socket_(ioContext), playerMap_(playerMap) {}
+        : socket_(ioContext), playerMap_(playerMap) {}
 
 void TCPConnection::handle_action(const boost::system::error_code& e) {
     std::istream input_stream(&buf_);
@@ -93,29 +91,4 @@ void TCPConnection::sendData(std::string &data) {
     boost::asio::async_write(socket_,
                              boost::asio::buffer(data + '\n'),
                              boost::asio::use_future);
-}
-
-TTServer::TTServer(boost::asio::io_context &ioContext,  PortType port)
-    : ioContext_(ioContext),
-      acceptor_(ioContext, tcp::endpoint(tcp::v4(), port)),
-      playerMap_() {
-    start_accept();
-}
-
-void TTServer::start_accept() {
-    std::cout << "Awaiting connection..." << std::endl;
-    TCPConnection::pointer newConnection = TCPConnection::create(ioContext_, &playerMap_);
-    acceptor_.async_accept(newConnection->socket(),
-                           boost::bind(&TTServer::handle_accept, this,
-                                       newConnection, boost::asio::placeholders::error));
-}
-
-void TTServer::handle_accept(TCPConnection::pointer newConnection,
-                              const boost::system::error_code &error) {
-    std::cout << "Connection established..." << std::endl;
-    if(!error) {
-        newConnection->start();
-    }
-
-    start_accept();
 }

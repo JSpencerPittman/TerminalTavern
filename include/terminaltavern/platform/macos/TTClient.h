@@ -13,19 +13,11 @@
 #define REDRAW_FREQUENCY 100
 #define REFRESH_RATE 50
 
-#if BOOST_VERSION >= BOOST_1_82
-    #define PortType boost::asio::ip::port_type
-#elif BOOST_VERSION >= BOOST_1_74
-    #define PortType int
-#else
-    #define PortType int
-#endif
-
 using boost::asio::ip::tcp;
 
 class TTClient {
 public:
-    TTClient(boost::asio::io_service& ioService, std::string hostname,  PortType port);
+    TTClient(boost::asio::io_service& ioService, std::string hostname, boost::asio::ip::port_type port);
     void run();
 private:
     void sendAction(const Action& action);
@@ -51,7 +43,7 @@ private:
 
     // Networking
     std::string hostname_;
-    PortType port_;
+    boost::asio::ip::port_type port_;
     tcp::resolver resolver_;
     tcp::socket socket_;
 };
