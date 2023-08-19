@@ -2,17 +2,20 @@
 #include "Action.h"
 
 TTClient::TTClient(boost::asio::io_service& ioService, WINDOW* win)
-    : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), win_(win), room_(win),
+    : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), win_(win), room_(win), resolver_(ioService),
         timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {
 }
 
 void TTClient::run() {
     // Establish connection
-    socket_.connect(
-            tcp::endpoint(
-                    boost::asio::ip::address::from_string(SERVER_HOSTNAME),
-                    SERVER_PORT));
+    tcp::resolver::query query(SERVER_HOSTNAME, "http");
+    tcp::resolver::iterator endpointIterator = resolver_.resolve(query);
+    tcp::endpoint endpoint = *endpointIterator;
+    boost::asio::ip::address address = endpoint.address();
 
+    endpoint.port(SERVER_PORT);
+
+    socket_.connect(endpoint);
 
     // Get the player ID
     Action requestID = Action::reqID();

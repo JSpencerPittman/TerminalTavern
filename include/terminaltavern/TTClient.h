@@ -10,8 +10,8 @@
 #define REDRAW_FREQUENCY 100
 #define REFRESH_RATE 50
 
-#define SERVER_HOSTNAME "127.0.0.1"
-#define SERVER_PORT 9999
+#define SERVER_HOSTNAME "terminaltavern.ddns.net"
+#define SERVER_PORT 10777
 
 using boost::asio::ip::tcp;
 
@@ -35,6 +35,7 @@ private:
     int refCnt_;
     WINDOW* win_;
     Room room_;
+    tcp::resolver resolver_;
 };
 
 
