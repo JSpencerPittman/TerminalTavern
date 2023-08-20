@@ -8,8 +8,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
-#include "Action.h"
 #include "Player.h"
+#include "Packet.h"
 #include "util.h"
 
 using boost::asio::ip::tcp;
@@ -30,13 +30,13 @@ private:
     TCPConnection(boost::asio::io_context& ioContext, PlayerMap* playerMap);
 
     // Process the user's request
-    void handle_action(const boost::system::error_code& e);
+    void handlePacket(const boost::system::error_code& e);
 
-    void handleActionRequestID(const Action& action);
-    void handleActionAddPlayer(const Action& action);
-    void handleActionMovePlayer(const Action& action);
-    void handleActionDeletePlayer(const Action& action);
-    void handleActionRefresh(const Action& action);
+    void handleMovePlayer(MovePacket* packet);
+    void handleAddPlayer(AddPacket* packet);
+    void handleDeletePlayer(DeletePacket* packet);
+    void handleRequestID(RequestIDPacket* packet);
+    void handleRefresh(RefreshPacket* packet);
 
     void sendData(std::string& data);
 

@@ -10,7 +10,7 @@ tcp::socket &TCPConnection::socket() {
 
 void TCPConnection::start() {
     boost::asio::async_read_until(socket_, buf_, '\n',
-                                  boost::bind(&TCPConnection::handle_action,
+                                  boost::bind(&TCPConnection::handlePacket,
                                               shared_from_this(),
                                               boost::asio::placeholders::error));
 }
@@ -18,30 +18,30 @@ void TCPConnection::start() {
 TCPConnection::TCPConnection(boost::asio::io_context &ioContext, PlayerMap* playerMap)
         : socket_(ioContext), playerMap_(playerMap) {}
 
-void TCPConnection::handle_action(const boost::system::error_code& e) {
+void TCPConnection::handlePacket(const boost::system::error_code& e) {
     std::istream input_stream(&buf_);
     std::string data;
     std::getline(input_stream, data);
 
     if(e == boost::asio::error::eof) return;
 
-    Action action = Action::deserialize(data);
+    Packet* packet = Packet::deserialize(data);
 
-    switch (action.getOperation()) {
-        case Action::REQID:
-            handleActionRequestID(action);
+    switch (packet->operation()) {
+        case Packet::Operation::MOVE:
+            handleMovePlayer((MovePacket*)packet);
             break;
-        case Action::ADD:
-            handleActionAddPlayer(action);
+        case Packet::Operation::ADD:
+            handleAddPlayer((AddPacket*)packet);
             break;
-        case Action::MOVE:
-            handleActionMovePlayer(action);
+        case Packet::Operation::DEL:
+            handleDeletePlayer((DeletePacket*)packet);
             break;
-        case Action::DEL:
-            handleActionDeletePlayer(action);
+        case Packet::Operation::REQID:
+            handleRequestID((RequestIDPacket*)packet);
             break;
-        case Action::REFRESH:
-            handleActionRefresh(action);
+        case  Packet::Operation::REFRESH:
+            handleRefresh((RefreshPacket*)packet);
             break;
         default:
             break;
@@ -51,45 +51,39 @@ void TCPConnection::handle_action(const boost::system::error_code& e) {
     start();
 }
 
-void TCPConnection::handleActionRequestID(const Action &action) {
+void TCPConnection::handleMovePlayer(MovePacket *packet) {
+    std::cout << "Moving player #" << packet->playerID()
+              << "..." << std::endl;
+    playerMap_->movePlayer(packet->playerID(),
+                           packet->direction());
+
+    std::string serialPlayerMap = playerMap_->serialize();
+    sendData(serialPlayerMap);
+}
+
+void TCPConnection::handleAddPlayer(AddPacket* packet) {
+    std::cout << "Adding player #" << packet->player().getPlayerID()
+        << "..." << std::endl;
+
+    playerMap_->addPlayer(packet->player());
+
+    std::string serialPlayerMap = playerMap_->serialize();
+    sendData(serialPlayerMap);
+}
+
+void TCPConnection::handleDeletePlayer(DeletePacket* packet) {
+    std::cout << "Terminating player #" << packet->playerID()
+        << "..." << std::endl;
+    playerMap_->removePlayer(packet->playerID());
+}
+
+void TCPConnection::handleRequestID(RequestIDPacket* /*packet*/) {
     std::cout << "Sending available player ID..." << std::endl;
     std::string serialPlayerID = std::to_string(playerMap_->availableID());
     sendData(serialPlayerID);
 }
 
-void TCPConnection::handleActionAddPlayer(const Action &action) {
-    std::cout << "Adding player #" << action.getPlayerID() << "..." << std::endl;
-    PlayerPixelMap::PixelMap pixmap = {
-            {'0','0','0'},
-            {'0',' ','0'},
-            {'0','0','0'}
-    };
-    PlayerPixelMap playerPixelMap(pixmap);
-
-    Player newPlayer{action.getPlayerID(), action.getX(), action.getY(), playerPixelMap};
-    playerMap_->addPlayer(newPlayer);
-
-    std::string serialPlayerMap = playerMap_->serialize();
-    sendData(serialPlayerMap);
-}
-
-void TCPConnection::handleActionMovePlayer(const Action &action) {
-    std::cout << "Moving player #" << action.getPlayerID() << "..." << std::endl;
-    int pID = action.getPlayerID();
-    Direction dir = action.getDirection();
-    playerMap_->movePlayer(pID, dir);
-
-    std::string serialPlayerMap = playerMap_->serialize();
-    sendData(serialPlayerMap);
-}
-
-void TCPConnection::handleActionDeletePlayer(const Action &action) {
-    std::cout << "Terminating player #" << action.getPlayerID() << "..." << std::endl;
-    int pID = action.getPlayerID();
-    playerMap_->removePlayer(pID);
-}
-
-void TCPConnection::handleActionRefresh(const Action &action) {
+void TCPConnection::handleRefresh(RefreshPacket* /*packet*/) {
     std::string serialPlayerMap = playerMap_->serialize();
     sendData(serialPlayerMap);
 }

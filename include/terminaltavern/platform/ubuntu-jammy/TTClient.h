@@ -9,6 +9,7 @@
 #include "Player.h"
 #include "Room.h"
 #include "util.h"
+#include "Packet.h"
 
 #define REDRAW_FREQUENCY 100
 #define REFRESH_RATE 50
@@ -17,10 +18,10 @@ using boost::asio::ip::tcp;
 
 class TTClient {
 public:
-    TTClient(boost::asio::io_service& ioService, std::string hostname, int port);
+    TTClient(boost::asio::io_service& ioService, ServerInfo serverInfo, Player player);
     void run();
 private:
-    void sendAction(const Action& action);
+    void sendPacket(const Packet& packet);
     int retrievePlayerID();
     PlayerMap retrievePlayerMap();
     static Direction getInput();
@@ -35,6 +36,7 @@ private:
 
     // Tavern
     int playerID_;
+    Player player_;
     Room room_;
 
     // Main execution loop
@@ -42,8 +44,7 @@ private:
     int refCnt_;
 
     // Networking
-    std::string hostname_;
-    int port_;
+    ServerInfo serverInfo_;
     tcp::resolver resolver_;
     tcp::socket socket_;
 };

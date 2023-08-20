@@ -6,12 +6,8 @@
 #include <string>
 #include <boost/asio.hpp>
 #include "TCPConnection.h"
-#include "Action.h"
 #include "Player.h"
 #include "util.h"
-
-#define BOOST_1_82 108200
-#define BOOST_1_74 107400
 
 using boost::asio::ip::tcp;
 

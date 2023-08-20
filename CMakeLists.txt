@@ -27,8 +27,8 @@ find_package(Curses REQUIRED)
 include_directories(include/terminaltavern/shared)
 include_directories(${PLATFORM_INCLUDE_PATH})
 
-set(GENERAL_SOURCE_FILES shared/Player.cpp shared/Action.cpp)
-set(CLIENT_SOURCE_FILES shared/client.cpp ${PLATFORM_SRC_PATH}/TTClient.cpp shared/Room.cpp)
+set(GENERAL_SOURCE_FILES shared/Player.cpp shared/Packet.cpp)
+set(CLIENT_SOURCE_FILES shared/client.cpp ${PLATFORM_SRC_PATH}/TTClient.cpp shared/Room.cpp shared/Logo.cpp shared/Start.cpp)
 set(SERVER_SOURCE_FILES shared/server.cpp ${PLATFORM_SRC_PATH}/TTServer.cpp shared/TCPConnection.cpp)
 
 add_executable(Client ${CLIENT_SOURCE_FILES} ${GENERAL_SOURCE_FILES})

@@ -1,9 +1,9 @@
 #include "TTServer.h"
 
 TTServer::TTServer(boost::asio::io_context &ioContext, int port)
-    : ioContext_(ioContext),
-      acceptor_(ioContext, tcp::endpoint(tcp::v4(), port)),
-      playerMap_() {
+        : ioContext_(ioContext),
+          acceptor_(ioContext, tcp::endpoint(tcp::v4(), port)),
+          playerMap_() {
     start_accept();
 }
 
@@ -16,7 +16,7 @@ void TTServer::start_accept() {
 }
 
 void TTServer::handle_accept(TCPConnection::pointer newConnection,
-                              const boost::system::error_code &error) {
+                             const boost::system::error_code &error) {
     std::cout << "Connection established..." << std::endl;
     if(!error) {
         newConnection->start();

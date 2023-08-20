@@ -1,12 +1,11 @@
 #include "TTClient.h"
 
 #include <utility>
-#include "Action.h"
 
-TTClient::TTClient(boost::asio::io_service& ioService, std::string hostname, int port)
-    : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), room_(initscr()), resolver_(ioService),
-        hostname_(std::move(hostname)), port_(port),
-        timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {
+TTClient::TTClient(boost::asio::io_service& ioService, ServerInfo serverInfo, Player player)
+        : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), room_(initscr()), resolver_(ioService),
+          serverInfo_(std::move(serverInfo)), player_(std::move(player)),
+          timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {
 }
 
 void TTClient::run() {
@@ -15,13 +14,12 @@ void TTClient::run() {
     socket_.connect(endpoint);
 
     // Get the player ID
-    Action requestID = Action::reqID();
-    sendAction(requestID);
+    sendPacket(RequestIDPacket());
     playerID_ = retrievePlayerID();
+    player_.updateID(playerID_);
 
     // Add the player to server
-    Action addPlayer = Action::add(playerID_, 5, 5);
-    sendAction(addPlayer);
+    sendPacket(AddPacket{player_});
 
     // Initialize room
     PlayerMap servMap = retrievePlayerMap();
@@ -48,9 +46,9 @@ std::string TTClient::getData() {
     return data;
 }
 
-void TTClient::sendAction(const Action& action) {
-    std::string serialAction = action.serialize();
-    write(socket_, boost::asio::buffer(serialAction + '\n'));
+void TTClient::sendPacket(const Packet &packet) {
+    std::string serialPacket = packet.serialize();
+    write(socket_, boost::asio::buffer(serialPacket + '\n'));
 }
 
 Direction TTClient::getInput() {
@@ -76,17 +74,15 @@ void TTClient::refreshClient() {
     Direction dir = getInput();
 
     if(dir == LEAVE) {
-        Action delPlayer = Action::del(playerID_);
-        sendAction(delPlayer);
+        DeletePacket deletePacket{playerID_};
+        sendPacket(deletePacket);
         return;
     } else if(dir != NONE) {
+        MovePacket movePacket{playerID_, dir};
+        sendPacket(movePacket);
         room_.movePlayer(playerID_, dir);
-        Action moveAction = Action::move(playerID_, dir);
-        sendAction(moveAction);
-    } else {
-        Action reqRefresh = Action::refresh();
-        sendAction(reqRefresh);
-    }
+    } else
+        sendPacket(RefreshPacket());
 
     PlayerMap serverMap = retrievePlayerMap();
     room_.alignWithServer(serverMap);
@@ -103,15 +99,16 @@ void TTClient::refreshClient() {
 tcp::endpoint TTClient::resolveEndpoint() {
     boost::asio::ip::address ipAddress;
 
-    if(isIPAddress(hostname_)) ipAddress = boost::asio::ip::address::from_string(hostname_);
+    if(isIPAddress(serverInfo_.hostname)) ipAddress =
+                                                  boost::asio::ip::address::from_string(serverInfo_.hostname);
     else {
-        tcp::resolver::query query(hostname_, "http");
+        tcp::resolver::query query(serverInfo_.hostname, "http");
         tcp::resolver::iterator endpointIterator = resolver_.resolve(query);
         tcp::endpoint endpoint = *endpointIterator;
         ipAddress = endpoint.address();
     }
 
-    return {ipAddress, port_};
+    return {ipAddress, serverInfo_.port};
 }
 
 bool TTClient::isIPAddress(const std::string& s) {

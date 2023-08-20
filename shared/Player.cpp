@@ -2,6 +2,10 @@
 
 #include <utility>
 
+PlayerPixelMap::PlayerPixelMap(): pmap_{{'0','0','0'},
+                                        {'0','0','0'},
+                                        {'0','0','0'}} {}
+
 PlayerPixelMap::PlayerPixelMap(PlayerPixelMap::PixelMap pmap): pmap_(std::move(pmap)) {}
 
 char PlayerPixelMap::getPixel(Coord2D pos) const {
@@ -75,11 +79,15 @@ PlayerPixelMap PlayerPixelMap::deserialize(const std::string &serPixMap) {
     return PlayerPixelMap(pixmap);
 }
 
-Player::Player(int pID, Coord2D initPos, PlayerPixelMap& pixelMap)
-    : pID(pID), pos(initPos), pixmap(pixelMap) {}
+Player::Player(int pID, Coord2D initPos, PlayerPixelMap pixelMap, std::string uname)
+    : pID(pID), pos(initPos), pixmap(std::move(pixelMap)), username(std::move(uname)) {}
 
-Player::Player(int pID, int x, int y, PlayerPixelMap& pixelMap)
-    : pID(pID), pos{x, y}, pixmap(pixelMap) {}
+Player::Player(int pID, int x, int y, PlayerPixelMap pixelMap, std::string uname)
+    : pID(pID), pos{x, y}, pixmap(std::move(pixelMap)), username(std::move(uname)) {}
+
+void Player::updateID(int id) {
+    pID = id;
+}
 
 void Player::move(Direction dir) {
     switch (dir) {
@@ -120,24 +128,24 @@ const PlayerPixelMap &Player::getPixelMap() const {
     return pixmap;
 }
 
-nlohmann::json Player::toJSON() const {
-    using nlohmann::json;
+json Player::toJSON() const {
     json jsonPlayer;
     jsonPlayer["pID"] = pID;
     jsonPlayer["x"] = pos.x;
     jsonPlayer["y"] = pos.y;
     jsonPlayer["pixmap"] = pixmap.serialize();
+    jsonPlayer["username"] = username;
     return jsonPlayer;
 }
 
-Player Player::fromJSON(const nlohmann::json& jsonPlayer) {
-    using nlohmann::json;
+Player Player::fromJSON(const json& jsonPlayer) {
     int pID = jsonPlayer["pID"];
     int x = jsonPlayer["x"];
     int y = jsonPlayer["y"];
     PlayerPixelMap pixmap =
             PlayerPixelMap::deserialize(jsonPlayer["pixmap"]);
-    return {pID, x, y, pixmap};
+    std::string username = jsonPlayer["username"];
+    return {pID, x, y, pixmap, username};
 }
 
 PlayerMap::PlayerMap() {
@@ -188,7 +196,7 @@ void PlayerMap::addPlayer(Coord2D pos) {
     };
     PlayerPixelMap playerPixelMap(pixelmap);
 
-    players.emplace_back(pID, pos, playerPixelMap);
+    players.emplace_back(pID, pos, playerPixelMap, " ");
     online[pID] = true;
 }
 
@@ -229,8 +237,6 @@ void PlayerMap::print() {
 }
 
 std::string PlayerMap::serialize() {
-    using nlohmann::json;
-
     std::vector<json> jsonPlayers;
 
     auto playerItr = players.begin();
@@ -243,8 +249,6 @@ std::string PlayerMap::serialize() {
 }
 
 PlayerMap PlayerMap::deserialize(const std::string& serPlyMap) {
-    using nlohmann::json;
-
     json jsonPlyMap = json::parse(serPlyMap);
     std::vector<json> jsonPlayers = jsonPlyMap["map"];
 

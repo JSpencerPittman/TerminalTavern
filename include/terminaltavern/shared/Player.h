@@ -5,14 +5,19 @@
 #include <vector>
 #include <utility>
 #include <string>
-#include "Action.h"
+
+#include <nlohmann/json.hpp>
+
 #include "util.h"
+
+using nlohmann::json;
 
 class PlayerPixelMap {
 public:
     typedef std::vector<std::vector<char>> PixelMap;
     typedef std::vector<std::pair<Coord2D, char>> Unravel;
 
+    PlayerPixelMap();
     explicit PlayerPixelMap(PixelMap pmap);
 
     char getPixel(Coord2D pos) const;
@@ -33,8 +38,10 @@ private:
 
 class Player {
 public:
-    Player(int pID, Coord2D initPos, PlayerPixelMap& pixelMap);
-    Player(int pID, int x, int y, PlayerPixelMap& pixelMap);
+    Player(int pID, Coord2D initPos, PlayerPixelMap pixelMap, std::string uname);
+    Player(int pID, int x, int y, PlayerPixelMap pixelMap, std::string uname);
+
+    void updateID(int id);
 
     void move(Direction dir);
     void teleport(Coord2D pos);
@@ -44,13 +51,14 @@ public:
     int getPlayerID() const;
     const PlayerPixelMap& getPixelMap() const;
 
-    nlohmann::json toJSON() const;
-    static Player fromJSON(const nlohmann::json& jsonPlayer);
+    json toJSON() const;
+    static Player fromJSON(const json& jsonPlayer);
 
 private:
     int pID;
     Coord2D pos;
     PlayerPixelMap pixmap;
+    std::string username;
 };
 
 #define PLAYER_LIMIT 10
