@@ -2,11 +2,11 @@
 
 #include <utility>
 
-TTClient::TTClient(boost::asio::io_service& ioService, ServerInfo serverInfo, Player player)
-        : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), room_(initscr()), resolver_(ioService),
-          serverInfo_(std::move(serverInfo)), player_(std::move(player)),
-          timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {
-}
+TTClient::TTClient(boost::asio::io_service& ioService, WINDOW* win, ServerInfo serverInfo, Player player)
+        : socket_(tcp::socket(ioService)), playerID_(-1), refCnt_(0), resolver_(ioService),
+          room_(win), chat_(win, player), inChat_(false),
+          serverInfo_(std::move(serverInfo)), player_(player),
+          timer_(ioService, boost::asio::chrono::milliseconds(REFRESH_RATE)) {}
 
 void TTClient::run() {
     // Establish connection
@@ -17,11 +17,13 @@ void TTClient::run() {
     sendPacket(RequestIDPacket());
     playerID_ = retrievePlayerID();
     player_.updateID(playerID_);
+    chat_.updatePlayerID(playerID_);
 
     // Add the player to server
     sendPacket(AddPacket{player_});
 
     // Initialize room
+    room_.start();
     PlayerMap servMap = retrievePlayerMap();
     room_.alignWithServer(servMap);
 
@@ -38,6 +40,11 @@ PlayerMap TTClient::retrievePlayerMap() {
     return PlayerMap::deserialize(serialPlayerMap);
 }
 
+MessageHistory TTClient::retrieveMessageHistory() {
+    std::string serMsgHist = getData();
+    return MessageHistory::deserialize(serMsgHist);
+}
+
 std::string TTClient::getData() {
     boost::asio::streambuf buf;
     boost::asio::read_until(socket_, buf, '\n');
@@ -51,7 +58,7 @@ void TTClient::sendPacket(const Packet &packet) {
     write(socket_, boost::asio::buffer(serialPacket + '\n'));
 }
 
-Direction TTClient::getInput() {
+Direction TTClient::getRoomInput() {
     int in_char = getch();
 
     switch (in_char) {
@@ -65,31 +72,71 @@ Direction TTClient::getInput() {
             return LEFT;
         case 'q':
             return LEAVE;
+        case 9:
+            return SWITCH;
         default:
             return NONE;
     }
 }
 
+
+
 void TTClient::refreshClient() {
-    Direction dir = getInput();
+    if(inChat_) {
+        int key = getch();
 
-    if(dir == LEAVE) {
-        DeletePacket deletePacket{playerID_};
-        sendPacket(deletePacket);
-        return;
-    } else if(dir != NONE) {
-        MovePacket movePacket{playerID_, dir};
-        sendPacket(movePacket);
-        room_.movePlayer(playerID_, dir);
-    } else
-        sendPacket(RefreshPacket());
+        switch(key) {
+            case ENTER:
+                sendPacket(SendMessagePacket{player_.getUsername(), chat_.getInput()});
+                chat_.clearBuffer();
+                break;
+            case BACKSPACE:
+                chat_.popBuffer();
+                break;
+            case TABKEY:
+                inChat_ = false;
+                break;
+            case ERR:
+                break;
+            default:
+                chat_.appendBuffer((char)key);
+                break;
+        }
 
-    PlayerMap serverMap = retrievePlayerMap();
-    room_.alignWithServer(serverMap);
+        if(key != ENTER) sendPacket(RefreshChatPacket{});
 
-    if (refCnt_++ % REDRAW_FREQUENCY == 0) {
-        refCnt_ = 0;
-        room_.redrawRoom();
+        MessageHistory messageHistory = retrieveMessageHistory();
+        chat_.writeMessageHistory(messageHistory);
+
+        if(!inChat_) room_.start();
+
+    } else {
+        Direction dir = getRoomInput();
+
+        if (dir == LEAVE) {
+            DeletePacket deletePacket{playerID_};
+            sendPacket(deletePacket);
+            return;
+        } else if (dir == SWITCH) {
+            inChat_ = true;
+        } else if (dir != NONE) {
+            MovePacket movePacket{playerID_, dir};
+            sendPacket(movePacket);
+            room_.movePlayer(playerID_, dir);
+        } else
+            sendPacket(RefreshRoomPacket());
+
+        if(!inChat_) {
+            PlayerMap serverMap = retrievePlayerMap();
+            room_.alignWithServer(serverMap);
+
+            if (refCnt_++ % REDRAW_FREQUENCY == 0) {
+                refCnt_ = 0;
+                room_.redrawRoom();
+            }
+        }
+
+        if(inChat_) chat_.start();
     }
 
     timer_.expires_from_now(boost::asio::chrono::milliseconds (REFRESH_RATE));
@@ -108,7 +155,8 @@ tcp::endpoint TTClient::resolveEndpoint() {
         ipAddress = endpoint.address();
     }
 
-    return {ipAddress, serverInfo_.port};
+    int port(serverInfo_.port);
+    return {ipAddress, port};
 }
 
 bool TTClient::isIPAddress(const std::string& s) {

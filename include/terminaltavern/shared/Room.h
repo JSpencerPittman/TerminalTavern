@@ -11,6 +11,7 @@
 class Room {
 public:
     explicit Room(WINDOW *win);
+    void start();
 
     void addPlayer(Player p);
     void removePlayer(int pID);

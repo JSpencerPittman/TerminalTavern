@@ -7,6 +7,7 @@
 #include <boost/asio.hpp>
 #include "TCPConnection.h"
 #include "Player.h"
+#include "Chat.h"
 #include "util.h"
 
 using boost::asio::ip::tcp;
@@ -28,6 +29,7 @@ private:
     boost::asio::io_context& ioContext_;
     tcp::acceptor acceptor_;
     PlayerMap playerMap_;
+    MessageHistory history_;
 };
 
 #endif

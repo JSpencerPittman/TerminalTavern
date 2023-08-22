@@ -10,6 +10,7 @@
 #include <boost/asio.hpp>
 #include "Player.h"
 #include "Packet.h"
+#include "Message.h"
 #include "util.h"
 
 using boost::asio::ip::tcp;
@@ -19,7 +20,7 @@ class TCPConnection: public boost::enable_shared_from_this<TCPConnection>
 public:
     typedef boost::shared_ptr<TCPConnection> pointer;
 
-    static pointer create(boost::asio::io_context& ioContext, PlayerMap* playerMap);
+    static pointer create(boost::asio::io_context& ioContext, PlayerMap* playerMap, MessageHistory* history);
 
     tcp::socket& socket();
 
@@ -27,7 +28,7 @@ public:
     void start();
 
 private:
-    TCPConnection(boost::asio::io_context& ioContext, PlayerMap* playerMap);
+    TCPConnection(boost::asio::io_context& ioContext, PlayerMap* playerMap, MessageHistory* history);
 
     // Process the user's request
     void handlePacket(const boost::system::error_code& e);
@@ -36,7 +37,9 @@ private:
     void handleAddPlayer(AddPacket* packet);
     void handleDeletePlayer(DeletePacket* packet);
     void handleRequestID(RequestIDPacket* packet);
-    void handleRefresh(RefreshPacket* packet);
+    void handleRefreshRoom(RefreshRoomPacket* packet);
+    void handleSendMessage(SendMessagePacket* packet);
+    void handleRefreshChat(RefreshChatPacket* packet);
 
     void sendData(std::string& data);
 
@@ -44,6 +47,7 @@ private:
     std::string message_;
     boost::asio::streambuf buf_;
     PlayerMap *playerMap_;
+    MessageHistory* history_;
 };
 
 

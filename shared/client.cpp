@@ -18,7 +18,8 @@ int main(int argc, char* argv[]) {
     Player player(-1, initPos, start.getPlayerPixelMap(), start.getUsername());
 
     boost::asio::io_service ioService;
-    TTClient client(ioService, serverInfo, player);
+    WINDOW* win = initscr();
+    TTClient client(ioService, win, serverInfo, player);
     client.run();
     ioService.run();
 }

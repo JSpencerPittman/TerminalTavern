@@ -27,12 +27,12 @@ find_package(Curses REQUIRED)
 include_directories(include/terminaltavern/shared)
 include_directories(${PLATFORM_INCLUDE_PATH})
 
-set(GENERAL_SOURCE_FILES shared/Player.cpp shared/Packet.cpp)
-set(CLIENT_SOURCE_FILES shared/client.cpp ${PLATFORM_SRC_PATH}/TTClient.cpp shared/Room.cpp shared/Logo.cpp shared/Start.cpp)
+set(GENERAL_SOURCE_FILES shared/Player.cpp shared/Packet.cpp shared/Message.cpp)
+set(CLIENT_SOURCE_FILES shared/client.cpp ${PLATFORM_SRC_PATH}/TTClient.cpp shared/Room.cpp shared/Logo.cpp shared/Start.cpp shared/Chat.cpp)
 set(SERVER_SOURCE_FILES shared/server.cpp ${PLATFORM_SRC_PATH}/TTServer.cpp shared/TCPConnection.cpp)
 
 add_executable(Client ${CLIENT_SOURCE_FILES} ${GENERAL_SOURCE_FILES})
 add_executable(Server ${SERVER_SOURCE_FILES} ${GENERAL_SOURCE_FILES})
 
-target_link_libraries(Client Boost::system nlohmann_json::nlohmann_json  ${CURSES_LIBRARIES})
+target_link_libraries(Client Boost::system nlohmann_json::nlohmann_json ${CURSES_LIBRARIES})
 target_link_libraries(Server Boost::system nlohmann_json::nlohmann_json)

@@ -50,6 +50,7 @@ public:
     Coord2D getPos() const;
     int getPlayerID() const;
     const PlayerPixelMap& getPixelMap() const;
+    std::string getUsername() const;
 
     json toJSON() const;
     static Player fromJSON(const json& jsonPlayer);

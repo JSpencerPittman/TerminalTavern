@@ -25,8 +25,12 @@ Packet* Packet::deserialize(const std::string& serPacket) {
             return DeletePacket::fromJSON(jsonPacket);
         case REQID:
             return RequestIDPacket::fromJSON(jsonPacket);
-        case REFRESH:
-            return RefreshPacket::fromJSON(jsonPacket);
+        case REFRESHROOM:
+            return RefreshRoomPacket::fromJSON(jsonPacket);
+        case MESSAGE:
+            return SendMessagePacket::fromJSON(jsonPacket);
+        case REFRESHCHAT:
+            return RefreshChatPacket::fromJSON(jsonPacket);
     }
 
     return nullptr;
@@ -44,8 +48,12 @@ Packet* Packet::fromJSON(json jsonPacket) {
             return DeletePacket::fromJSON(jsonPacket);
         case REQID:
             return RequestIDPacket::fromJSON(jsonPacket);
-        case REFRESH:
-            return RefreshPacket::fromJSON(jsonPacket);
+        case REFRESHROOM:
+            return RefreshRoomPacket::fromJSON(jsonPacket);
+        case MESSAGE:
+            return SendMessagePacket::fromJSON(jsonPacket);
+        case REFRESHCHAT:
+            return RefreshChatPacket::fromJSON(jsonPacket);
     }
 
     return nullptr;
@@ -178,28 +186,87 @@ RequestIDPacket* RequestIDPacket::fromJSON(json jsonPacket) {
 }
 
 /*---------------------------------------*/
-/*            Refresh Packet             */
+/*         Refresh Room Packet           */
 /*---------------------------------------*/
 
-RefreshPacket::RefreshPacket()
-        : Packet(REFRESH) {}
+RefreshRoomPacket::RefreshRoomPacket()
+        : Packet(REFRESHROOM) {}
 
-std::string RefreshPacket::serialize() const {
+std::string RefreshRoomPacket::serialize() const {
     json jsonPacket;
     jsonPacket["operation"] = operation_;
     return jsonPacket.dump();
 }
 
-RefreshPacket* RefreshPacket::deserialize(const std::string& serPacket) {
+RefreshRoomPacket* RefreshRoomPacket::deserialize(const std::string& serPacket) {
     json jsonPacket = json::parse(serPacket);
     return fromJSON(jsonPacket);
 }
 
-RefreshPacket* RefreshPacket::fromJSON(json jsonPacket) {
+RefreshRoomPacket* RefreshRoomPacket::fromJSON(json jsonPacket) {
     // Verify correct packet
     Operation operation = jsonPacket["operation"];
-    if(operation != REFRESH) return new RefreshPacket{};
+    if(operation != REFRESHROOM) return new RefreshRoomPacket{};
 
-    return new RefreshPacket{};
+    return new RefreshRoomPacket{};
 }
 
+/*---------------------------------------*/
+/*         Send Message Packet           */
+/*---------------------------------------*/
+
+SendMessagePacket::SendMessagePacket(std::string username, std::string message)
+        : Packet(MESSAGE), username_(username), message_(message) {}
+
+std::string SendMessagePacket::username() const { return username_; }
+
+std::string SendMessagePacket::message() const { return message_; }
+
+std::string SendMessagePacket::serialize() const {
+    json jsonPacket;
+    jsonPacket["operation"] = operation_;
+    jsonPacket["username"] = username_;
+    jsonPacket["message"] = message_;
+    return jsonPacket.dump();
+}
+
+SendMessagePacket* SendMessagePacket::deserialize(const std::string& serPacket) {
+    json jsonPacket = json::parse(serPacket);
+    return fromJSON(jsonPacket);
+}
+
+SendMessagePacket* SendMessagePacket::fromJSON(json jsonPacket) {
+    // Verify correct packet
+    Operation operation = jsonPacket["operation"];
+    if(operation != MESSAGE) return new SendMessagePacket{"", ""};
+
+    std::string username = jsonPacket["username"];
+    std::string message = jsonPacket["message"];
+    return new SendMessagePacket{username, message};
+}
+
+/*---------------------------------------*/
+/*         Refresh Room Packet           */
+/*---------------------------------------*/
+
+RefreshChatPacket::RefreshChatPacket()
+        : Packet(REFRESHCHAT) {}
+
+std::string RefreshChatPacket::serialize() const {
+    json jsonPacket;
+    jsonPacket["operation"] = operation_;
+    return jsonPacket.dump();
+}
+
+RefreshChatPacket* RefreshChatPacket::deserialize(const std::string& serPacket) {
+    json jsonPacket = json::parse(serPacket);
+    return fromJSON(REFRESHCHAT);
+}
+
+RefreshChatPacket* RefreshChatPacket::fromJSON(json jsonPacket) {
+    // Verify correct packet
+    Operation operation = jsonPacket["operation"];
+    if(operation != REFRESHCHAT) return new RefreshChatPacket{};
+
+    return new RefreshChatPacket{};
+}

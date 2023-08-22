@@ -3,7 +3,7 @@
 
 #include <string>
 
-enum Direction { UP, RIGHT, DOWN, LEFT, NONE, LEAVE };
+enum Direction { UP, RIGHT, DOWN, LEFT, NONE, LEAVE, SWITCH };
 
 typedef struct {
     int x;

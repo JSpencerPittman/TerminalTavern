@@ -128,6 +128,10 @@ const PlayerPixelMap &Player::getPixelMap() const {
     return pixmap;
 }
 
+std::string Player::getUsername() const {
+    return username;
+}
+
 json Player::toJSON() const {
     json jsonPlayer;
     jsonPlayer["pID"] = pID;

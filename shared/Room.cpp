@@ -1,13 +1,12 @@
 #include "Room.h"
 
-Room::Room(WINDOW *win): win_(win) {
-    this->winWidth_ = getmaxx(win);
-    this->winHeight_ = getmaxy(win);
+Room::Room(WINDOW *win): win_(win), winWidth_(getmaxx(win)), winHeight_(getmaxy(win)) {}
 
+void Room::start() {
     cbreak();
     noecho();
     curs_set(0); // Hide cursor
-    nodelay(win, TRUE);
+    nodelay(win_, TRUE);
 
     clear();
     drawBorder();

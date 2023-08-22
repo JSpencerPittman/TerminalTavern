@@ -1,7 +1,8 @@
 #include "TCPConnection.h"
 
-TCPConnection::pointer TCPConnection::create(boost::asio::io_context &ioContext, PlayerMap* playerMap) {
-    return pointer(new TCPConnection(ioContext, playerMap));
+TCPConnection::pointer TCPConnection::create(boost::asio::io_context &ioContext,
+                                             PlayerMap* playerMap, MessageHistory* history) {
+    return pointer(new TCPConnection(ioContext, playerMap, history));
 }
 
 tcp::socket &TCPConnection::socket() {
@@ -15,8 +16,9 @@ void TCPConnection::start() {
                                               boost::asio::placeholders::error));
 }
 
-TCPConnection::TCPConnection(boost::asio::io_context &ioContext, PlayerMap* playerMap)
-        : socket_(ioContext), playerMap_(playerMap) {}
+TCPConnection::TCPConnection(boost::asio::io_context &ioContext,
+                             PlayerMap* playerMap, MessageHistory* history)
+        : socket_(ioContext), playerMap_(playerMap), history_(history) {}
 
 void TCPConnection::handlePacket(const boost::system::error_code& e) {
     std::istream input_stream(&buf_);
@@ -40,8 +42,14 @@ void TCPConnection::handlePacket(const boost::system::error_code& e) {
         case Packet::Operation::REQID:
             handleRequestID((RequestIDPacket*)packet);
             break;
-        case  Packet::Operation::REFRESH:
-            handleRefresh((RefreshPacket*)packet);
+        case  Packet::Operation::REFRESHROOM:
+            handleRefreshRoom((RefreshRoomPacket*)packet);
+            break;
+        case Packet::Operation::MESSAGE:
+            handleSendMessage((SendMessagePacket*)packet);
+            break;
+        case Packet::Operation::REFRESHCHAT:
+            handleRefreshChat((RefreshChatPacket*)packet);
             break;
         default:
             break;
@@ -83,9 +91,21 @@ void TCPConnection::handleRequestID(RequestIDPacket* /*packet*/) {
     sendData(serialPlayerID);
 }
 
-void TCPConnection::handleRefresh(RefreshPacket* /*packet*/) {
+void TCPConnection::handleRefreshRoom(RefreshRoomPacket* /*packet*/) {
     std::string serialPlayerMap = playerMap_->serialize();
     sendData(serialPlayerMap);
+}
+
+void TCPConnection::handleSendMessage(SendMessagePacket* packet) {
+    Message newMsg{packet->username(), packet->message()};
+    history_->addMessage(newMsg);
+    std::string serialHistory = history_->serialize();
+    sendData(serialHistory);
+}
+
+void TCPConnection::handleRefreshChat(RefreshChatPacket* /*packet*/) {
+    std::string serialHistory = history_->serialize();
+    sendData(serialHistory);
 }
 
 void TCPConnection::sendData(std::string &data) {

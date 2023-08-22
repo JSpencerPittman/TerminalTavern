@@ -12,7 +12,7 @@ using nlohmann::json;
 
 class Packet {
 public:
-    enum Operation { MOVE, ADD, DEL, REQID, REFRESH };
+    enum Operation { MOVE, ADD, DEL, REQID, REFRESHROOM, REFRESHCHAT, MESSAGE };
 
     Packet(Operation operation);
 
@@ -75,13 +75,37 @@ public:
     static RequestIDPacket* fromJSON(json jsonPacket);
 };
 
-class RefreshPacket : public Packet {
+class RefreshRoomPacket : public Packet {
 public:
-    RefreshPacket();
+    RefreshRoomPacket();
 
     std::string serialize() const;
-    static RefreshPacket* deserialize(const std::string& serPacket);
-    static RefreshPacket* fromJSON(json jsonPacket);
+    static RefreshRoomPacket* deserialize(const std::string& serPacket);
+    static RefreshRoomPacket* fromJSON(json jsonPacket);
+};
+
+class SendMessagePacket : public Packet {
+public:
+    SendMessagePacket(std::string username, std::string message);
+
+    std::string username() const;
+    std::string message() const;
+
+    std::string serialize() const;
+    static SendMessagePacket* deserialize(const std::string& serPacket);
+    static SendMessagePacket* fromJSON(json jsonPacket);
+private:
+    std::string username_;
+    std::string message_;
+};
+
+class RefreshChatPacket : public Packet {
+public:
+    RefreshChatPacket();
+
+    std::string serialize() const;
+    static RefreshChatPacket* deserialize(const std::string& serPacket);
+    static RefreshChatPacket* fromJSON(json jsonPacket);
 };
 
 #endif //TERMINALTAVERN_PACKET_H
