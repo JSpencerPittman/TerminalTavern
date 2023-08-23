@@ -87,7 +87,7 @@ void TTClient::refreshClient() {
 
         switch(key) {
             case ENTER:
-                sendPacket(SendMessagePacket{player_.getUsername(), chat_.getInput()});
+                sendPacket(SendMessagePacket{chat_.getInput()});
                 chat_.clearBuffer();
                 break;
             case BACKSPACE:
@@ -114,13 +114,13 @@ void TTClient::refreshClient() {
         Direction dir = getRoomInput();
 
         if (dir == LEAVE) {
-            DeletePacket deletePacket{playerID_};
+            DeletePacket deletePacket{};
             sendPacket(deletePacket);
             return;
         } else if (dir == SWITCH) {
             inChat_ = true;
         } else if (dir != NONE) {
-            MovePacket movePacket{playerID_, dir};
+            MovePacket movePacket{dir};
             sendPacket(movePacket);
             room_.movePlayer(playerID_, dir);
         } else

@@ -27,16 +27,14 @@ protected:
 
 class MovePacket : public Packet {
 public:
-    MovePacket(int playerID, Direction direction);
+    MovePacket(Direction direction);
 
-    int playerID() const;
     Direction direction() const;
 
     std::string serialize() const;
     static MovePacket* deserialize(const std::string& serPacket);
     static MovePacket* fromJSON(json jsonPacket);
 private:
-    int playerID_;
     Direction direction_;
 };
 
@@ -55,15 +53,11 @@ private:
 
 class DeletePacket : public Packet {
 public:
-    DeletePacket(int playerID);
-
-    int playerID() const;
+    DeletePacket();
 
     std::string serialize() const;
     static DeletePacket* deserialize(const std::string& serPacket);
     static DeletePacket* fromJSON(json jsonPacket);
-private:
-    int playerID_;
 };
 
 class RequestIDPacket : public Packet {
@@ -86,16 +80,14 @@ public:
 
 class SendMessagePacket : public Packet {
 public:
-    SendMessagePacket(std::string username, std::string message);
+    SendMessagePacket(std::string message);
 
-    std::string username() const;
     std::string message() const;
 
     std::string serialize() const;
     static SendMessagePacket* deserialize(const std::string& serPacket);
     static SendMessagePacket* fromJSON(json jsonPacket);
 private:
-    std::string username_;
     std::string message_;
 };
 

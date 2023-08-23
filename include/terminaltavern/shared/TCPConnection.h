@@ -49,6 +49,7 @@ private:
     PlayerMap *playerMap_;
     MessageHistory* history_;
     int playerID_;
+    std::string username_;
 };
 
 

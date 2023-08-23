@@ -79,6 +79,8 @@ PlayerPixelMap PlayerPixelMap::deserialize(const std::string &serPixMap) {
     return PlayerPixelMap(pixmap);
 }
 
+Player::Player(): pID(-1), pos{-1, -1} {}
+
 Player::Player(int pID, Coord2D initPos, PlayerPixelMap pixelMap, std::string uname)
     : pID(pID), pos(initPos), pixmap(std::move(pixelMap)), username(std::move(uname)) {}
 

@@ -65,11 +65,10 @@ void TCPConnection::handlePacket(const boost::system::error_code& e) {
 }
 
 void TCPConnection::handleMovePlayer(MovePacket *packet) {
-    std::cout << "Moving player #" << packet->playerID()
+    std::cout << "Moving player #" << playerID_
               << "..." << std::endl;
-    playerMap_->movePlayer(packet->playerID(),
+    playerMap_->movePlayer(playerID_,
                            packet->direction());
-
     std::string serialPlayerMap = playerMap_->serialize();
     sendData(serialPlayerMap);
 }
@@ -78,6 +77,8 @@ void TCPConnection::handleAddPlayer(AddPacket* packet) {
     std::cout << "Adding player #" << packet->player().getPlayerID()
         << "..." << std::endl;
 
+    playerID_ = packet->player().getPlayerID();
+    username_ = packet->player().getUsername();
     playerMap_->addPlayer(packet->player());
 
     std::string serialPlayerMap = playerMap_->serialize();
@@ -99,7 +100,7 @@ void TCPConnection::handleRefreshRoom(RefreshRoomPacket* /*packet*/) {
 }
 
 void TCPConnection::handleSendMessage(SendMessagePacket* packet) {
-    Message newMsg{packet->username(), packet->message()};
+    Message newMsg{username_, packet->message()};
     history_->addMessage(newMsg);
     std::string serialHistory = history_->serialize();
     sendData(serialHistory);

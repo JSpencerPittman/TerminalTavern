@@ -64,16 +64,14 @@ Packet* Packet::fromJSON(json jsonPacket) {
 /*              Move Packet              */
 /*---------------------------------------*/
 
-MovePacket::MovePacket(int playerID, Direction direction)
-    : Packet(MOVE), playerID_(playerID), direction_(direction) {}
+MovePacket::MovePacket(Direction direction)
+    : Packet(MOVE), direction_(direction) {}
 
-int MovePacket::playerID() const { return playerID_; }
 Direction MovePacket::direction() const { return direction_; }
 
 std::string MovePacket::serialize() const {
     json jsonPacket;
     jsonPacket["operation"] = operation_;
-    jsonPacket["playerID"] = playerID_;
     jsonPacket["direction"] = direction_;
     return jsonPacket.dump();
 }
@@ -86,12 +84,11 @@ MovePacket* MovePacket::deserialize(const std::string& serPacket) {
 MovePacket* MovePacket::fromJSON(json jsonPacket) {
     // Verify correct packet
     Operation operation = jsonPacket["operation"];
-    if(operation != MOVE) return new MovePacket{-1, NONE};
+    if(operation != MOVE) return new MovePacket{NONE};
 
-    int playerID = jsonPacket["playerID"];
     Direction direction = jsonPacket["direction"];
 
-    return new MovePacket{playerID, direction};
+    return new MovePacket{direction};
 }
 
 /*---------------------------------------*/
@@ -132,15 +129,12 @@ AddPacket* AddPacket::fromJSON(json jsonPacket) {
 /*             Delete Packet             */
 /*---------------------------------------*/
 
-DeletePacket::DeletePacket(int playerID)
-        : Packet(DEL), playerID_(playerID) {}
-
-int DeletePacket::playerID() const { return playerID_; }
+DeletePacket::DeletePacket()
+        : Packet(DEL) {}
 
 std::string DeletePacket::serialize() const {
     json jsonPacket;
     jsonPacket["operation"] = operation_;
-    jsonPacket["playerID"] = playerID_;
     return jsonPacket.dump();
 }
 
@@ -152,11 +146,9 @@ DeletePacket* DeletePacket::deserialize(const std::string& serPacket) {
 DeletePacket* DeletePacket::fromJSON(json jsonPacket) {
     // Verify correct packet
     Operation operation = jsonPacket["operation"];
-    if(operation != DEL) return new DeletePacket{-1};
+    if(operation != DEL) return new DeletePacket{};
 
-    int playerID = jsonPacket["playerID"];
-
-    return new DeletePacket{playerID};
+    return new DeletePacket{};
 }
 
 /*---------------------------------------*/
@@ -215,17 +207,14 @@ RefreshRoomPacket* RefreshRoomPacket::fromJSON(json jsonPacket) {
 /*         Send Message Packet           */
 /*---------------------------------------*/
 
-SendMessagePacket::SendMessagePacket(std::string username, std::string message)
-        : Packet(MESSAGE), username_(username), message_(message) {}
-
-std::string SendMessagePacket::username() const { return username_; }
+SendMessagePacket::SendMessagePacket(std::string message)
+        : Packet(MESSAGE), message_(message) {}
 
 std::string SendMessagePacket::message() const { return message_; }
 
 std::string SendMessagePacket::serialize() const {
     json jsonPacket;
     jsonPacket["operation"] = operation_;
-    jsonPacket["username"] = username_;
     jsonPacket["message"] = message_;
     return jsonPacket.dump();
 }
@@ -238,15 +227,14 @@ SendMessagePacket* SendMessagePacket::deserialize(const std::string& serPacket) 
 SendMessagePacket* SendMessagePacket::fromJSON(json jsonPacket) {
     // Verify correct packet
     Operation operation = jsonPacket["operation"];
-    if(operation != MESSAGE) return new SendMessagePacket{"", ""};
+    if(operation != MESSAGE) return new SendMessagePacket{""};
 
-    std::string username = jsonPacket["username"];
     std::string message = jsonPacket["message"];
-    return new SendMessagePacket{username, message};
+    return new SendMessagePacket{ message};
 }
 
 /*---------------------------------------*/
-/*         Refresh Room Packet           */
+/*         Refresh Chat Packet           */
 /*---------------------------------------*/
 
 RefreshChatPacket::RefreshChatPacket()

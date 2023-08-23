@@ -38,6 +38,7 @@ private:
 
 class Player {
 public:
+    Player();
     Player(int pID, Coord2D initPos, PlayerPixelMap pixelMap, std::string uname);
     Player(int pID, int x, int y, PlayerPixelMap pixelMap, std::string uname);
 
