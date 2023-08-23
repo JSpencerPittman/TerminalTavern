@@ -18,14 +18,19 @@ void TCPConnection::start() {
 
 TCPConnection::TCPConnection(boost::asio::io_context &ioContext,
                              PlayerMap* playerMap, MessageHistory* history)
-        : socket_(ioContext), playerMap_(playerMap), history_(history) {}
+        : socket_(ioContext), playerMap_(playerMap), history_(history), playerID_(-1) {}
 
 void TCPConnection::handlePacket(const boost::system::error_code& e) {
     std::istream input_stream(&buf_);
     std::string data;
     std::getline(input_stream, data);
 
-    if(e == boost::asio::error::eof) return;
+    if(e == boost::asio::error::eof) {
+        std::cout << "Terminating player #" << playerID_
+                  << "..." << std::endl;
+        playerMap_->removePlayer(playerID_);
+        return;
+    }
 
     Packet* packet = Packet::deserialize(data);
 
@@ -79,15 +84,12 @@ void TCPConnection::handleAddPlayer(AddPacket* packet) {
     sendData(serialPlayerMap);
 }
 
-void TCPConnection::handleDeletePlayer(DeletePacket* packet) {
-    std::cout << "Terminating player #" << packet->playerID()
-        << "..." << std::endl;
-    playerMap_->removePlayer(packet->playerID());
-}
+void TCPConnection::handleDeletePlayer(DeletePacket* packet) {}
 
 void TCPConnection::handleRequestID(RequestIDPacket* /*packet*/) {
     std::cout << "Sending available player ID..." << std::endl;
-    std::string serialPlayerID = std::to_string(playerMap_->availableID());
+    playerID_ = playerMap_->availableID();
+    std::string serialPlayerID = std::to_string(playerID_);
     sendData(serialPlayerID);
 }
 

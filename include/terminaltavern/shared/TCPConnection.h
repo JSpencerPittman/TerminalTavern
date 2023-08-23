@@ -48,6 +48,7 @@ private:
     boost::asio::streambuf buf_;
     PlayerMap *playerMap_;
     MessageHistory* history_;
+    int playerID_;
 };
 
 
